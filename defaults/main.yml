@@ -1,0 +1,7 @@
+---
+  # Global switches
+  supervisor_enabled: yes
+  supervisor_superlance: no
+  # Global yum instruction
+  yum_additional_packages:
+    - python-pip.noarch

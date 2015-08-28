@@ -1,0 +1,48 @@
+---
+
+# Contains the package set of instructions.
+
+# If we need specific packages from yum
+  - name: yum  |  install additional packages
+    yum: name={{item}}
+    with_items: yum_additional_packages
+
+
+    #NOTE if you need to restart services,
+    # 1. Fill up the /vars/main.yml dependent_services
+    # 2. Add a <notify restart dependent services > at the end
+    #  of the task which will invoke a handler
+
+  - name: supervisor  | install
+    pip: name=supervisor version={{ supervisor_version }}
+    notify:
+      - supervisor restart
+
+  - name: superlance  | install
+    pip: name=superlance
+    when: supervisor_superlance
+
+  - name: supervisor| ensure directories
+    file: state=directory path={{item}}
+    with_items:
+      - "{{supervisor_cfgdir}}"
+      - "{{supervisor_logdir}}"
+      - "{{supervisor_incdir}}"
+
+
+  - name: supervisor  | supervisor as a service
+    template: src=supervisord.service.j2 dest=/usr/lib/systemd/system/supervisord.service owner=root group=root mode=0755
+
+    # Dummy command to illustrate the conf in the vars/main.yml section.
+    # To be removed !
+  - name: supervisor  | copy dummy script (demo)
+    copy: src=dummy.sh  dest=/tmp/dummy.sh
+
+
+  - name: supervisor  | daemon configuration
+    template: src=supervisord.conf.j2 dest={{supervisor_conf_file}} owner=root group=root mode=0644
+    notify:
+      - supervisor restart
+
+  - name: supervisor  | ensure service started
+    service: name=supervisord state=started
